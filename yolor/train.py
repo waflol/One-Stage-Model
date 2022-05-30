@@ -45,7 +45,23 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
     logger.info(f'Hyperparameters {hyp}')
     save_dir, epochs, batch_size, total_batch_size, weights, rank = \
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.total_batch_size, opt.weights, opt.global_rank
-
+    
+    type_iou = opt.iou
+    
+    GIoU, DIoU, CIoU, EIoU, ECIoU = False,False,False,False,False
+    
+    if type_iou == 'CIoU':
+        CIoU = True
+    elif type_iou == 'DIoU':
+        DIoU = True
+    elif type_iou == 'GIoU':
+        GIoU = True
+    elif type_iou == 'EIoU':
+        GIoU = True
+    elif type_iou == 'ECIoU':
+        GIoU = True
+    else:
+        GIoU, DIoU, CIoU, EIoU, ECIoU = False,False,False,False,False
     # Directories
     wdir = save_dir / 'weights'
     wdir.mkdir(parents=True, exist_ok=True)  # make dir
@@ -285,7 +301,7 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
             # Forward
             with amp.autocast(enabled=cuda):
                 pred = model(imgs)  # forward
-                loss, loss_items = compute_loss(pred, targets.to(device), model)  # loss scaled by batch_size
+                loss, loss_items = compute_loss(pred, targets.to(device), model,GIoU = GIoU, DIoU = DIoU, CIoU = CIoU, EIoU = EIoU, ECIoU = ECIoU)  # loss scaled by batch_size
                 if rank != -1:
                     loss *= opt.world_size  # gradient averaged between devices in DDP mode
 
@@ -483,6 +499,7 @@ if __name__ == '__main__':
     parser.add_argument('--project', default='runs/train', help='save to project/name')
     parser.add_argument('--name', default='exp', help='save to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+    parser.add_argument('--iou', type=str, default='CIoU', help='Choose IoU')
     opt = parser.parse_args()
 
     # Set DDP variables

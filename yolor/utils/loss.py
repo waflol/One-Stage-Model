@@ -59,7 +59,7 @@ class FocalLoss(nn.Module):
             return loss
 
 
-def compute_loss(p, targets, model):  # predictions, targets, model
+def compute_loss(p, targets, model,CIoU=True,GIoU=False, DIoU=False, EIoU=False, ECIoU=False):  # predictions, targets, model
     device = targets.device
     #print(device)
     lcls, lbox, lobj = torch.zeros(1, device=device), torch.zeros(1, device=device), torch.zeros(1, device=device)
@@ -96,7 +96,7 @@ def compute_loss(p, targets, model):  # predictions, targets, model
             pxy = ps[:, :2].sigmoid() * 2. - 0.5
             pwh = (ps[:, 2:4].sigmoid() * 2) ** 2 * anchors[i]
             pbox = torch.cat((pxy, pwh), 1).to(device)  # predicted box
-            iou = bbox_iou(pbox.T, tbox[i], x1y1x2y2=False, CIoU=True)  # iou(prediction, target)
+            iou = bbox_iou(pbox.T, tbox[i], x1y1x2y2=False, CIoU=CIoU,GIoU=GIoU, DIoU=DIoU, EIoU=EIoU, ECIoU=ECIoU)  # iou(prediction, target)
             lbox += (1.0 - iou).mean()  # iou loss
 
             # Objectness
